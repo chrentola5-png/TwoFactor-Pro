@@ -1,69 +1,104 @@
 import streamlit as st
 import pyotp
-import time
+import random
+import string
+from datetime import datetime
+import pytz
 
-# --- 1. ការកំណត់ទំព័រ និង Style (CSS) ---
+# --- 1. ការកំណត់ទំព័រ ---
 st.set_page_config(page_title="TwoFactor Pro", page_icon="🔐", layout="centered")
 
-# CSS ដើម្បីតុបតែងឱ្យដូចកម្មវិធី Desktop របស់អ្នក
+# --- 2. CSS តុបតែងឱ្យដូច Desktop 100% ---
 st.markdown("""
     <style>
-    /* ប្តូរពណ៌ប៊ូតុងឱ្យទៅជាពណ៌ផ្កាឈូក */
-    div.stButton > button:first-child {
+    /* ផ្ទៃខាងក្រោយពណ៌ផ្កាឈូកស្រាល */
+    .stApp {
+        background-color: #FFF0F5;
+    }
+    
+    /* កែពណ៌ Tabs */
+    button[data-baseweb="tab"] {
+        background-color: transparent;
+        color: #000;
+        font-weight: bold;
+    }
+    button[data-baseweb="tab"][aria-selected="true"] {
         background-color: #E91E63;
         color: white;
+        border-radius: 5px 5px 0 0;
+    }
+
+    /* ប្រអប់កណ្តាលពណ៌ប្រផេះ (Gray Card) */
+    .block-container {
+        background-color: #E0E0E0;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+        max-width: 700px;
+        margin-top: 20px;
+    }
+
+    /* ប៊ូតុងពណ៌ផ្កាឈូក */
+    div.stButton > button {
+        background-color: #E91E63 !important;
+        color: white !important;
         font-weight: bold;
         border: none;
         width: 100%;
+        height: 45px;
+        border-radius: 5px;
+        font-size: 16px;
     }
     div.stButton > button:hover {
-        background-color: #C2185B;
-        color: white;
+        background-color: #C2185B !important;
+    }
+
+    /* Input Fields Background White */
+    .stTextArea textarea, .stTextInput input {
+        background-color: white !important;
+        color: black !important;
+    }
+
+    /* សម្រាប់ Title និង Header */
+    h1, h2, h3 {
+        color: #E91E63 !important;
+        padding: 0;
+        margin: 0;
     }
     
-    /* ធ្វើ Header ពណ៌ផ្កាឈូក */
-    .header-style {
-        background-color: #E91E63;
-        padding: 15px;
-        border-radius: 10px 10px 0 0;
-        text-align: center;
-        color: white;
-        font-size: 24px;
-        font-weight: bold;
-        margin-bottom: 20px;
-    }
-    
-    /* ធ្វើ Footer */
-    .footer-link {
-        text-decoration: none;
-        background-color: #03A9F4;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 5px;
-        margin: 0 5px;
-        font-size: 14px;
-    }
-    .footer-fb { background-color: #1877F2; }
-    .footer-tg { background-color: #0088cc; }
+    /* លាក់ Element ដែលមិនចាំបាច់ */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. បង្ហាញ Header ---
-st.markdown('<div class="header-style">TwoFactor Pro</div>', unsafe_allow_html=True)
+# --- 3. Header & Time (ពណ៌ផ្កាឈូកខាងលើ) ---
+tz = pytz.timezone('Asia/Phnom_Penh')
+current_time = datetime.now(tz).strftime("%b %d %I:%M:%S %p")
 
-# --- 3. បង្កើត Tabs (2FA, Password, Names) ---
+# បង្កើត Header ដោយប្រើ HTML ផ្ទាល់
+st.markdown(f"""
+    <div style="background-color: #E91E63; padding: 15px; border-radius: 10px 10px 0 0; display: flex; justify-content: space-between; align-items: center; color: white; margin-bottom: -30px; position: relative; z-index: 100;">
+        <div style="font-size: 24px; font-weight: bold; color: yellow;">TwoFactor <span style="color:yellow;">Pro</span></div>
+        <div style="font-size: 14px;">{current_time}</div>
+    </div>
+    <br>
+""", unsafe_allow_html=True)
+
+# --- 4. Tabs ---
 tab1, tab2, tab3 = st.tabs(["🔐 2FA", "🔑 Password", "📝 Names"])
 
-# === ផ្នែកទី 1: 2FA ===
+# === TAB 1: 2FA ===
 with tab1:
     st.write("### Secret Keys")
-    secret_input = st.text_area("Paste keys...", height=150, label_visibility="collapsed", placeholder="Paste your secret keys here...")
+    secret_input = st.text_area("Paste keys...", height=100, label_visibility="collapsed", placeholder="Paste secret keys here...")
     
-    # ប៊ូតុង Generate
     if st.button("GENERATE CODES"):
         if secret_input.strip():
             keys = secret_input.strip().split('\n')
-            output_text = ""
+            result_text = ""
+            valid_count = 0
             
             for key in keys:
                 key = key.strip()
@@ -71,31 +106,51 @@ with tab1:
                     try:
                         totp = pyotp.TOTP(key.replace(" ", ""))
                         code = totp.now()
-                        output_text += f"{code}\n"
+                        result_text += f"{code}\n"
+                        valid_count += 1
                     except:
-                        output_text += "Invalid Key\n"
+                        result_text += "Invalid Key\n"
             
             st.write("### Codes")
-            # បង្ហាញកូដក្នុងប្រអប់ដែលអាច Copy បានងាយ
-            st.code(output_text, language="text")
-            st.success("បង្កើតកូដជោគជ័យ!")
+            # st.code មានប៊ូតុង Copy នៅខាងស្តាំស្រាប់ (ល្អជាងប៊ូតុង Copy ធម្មតា)
+            st.code(result_text, language="text")
+            
+            if valid_count > 0:
+                st.toast(f"✅ បង្កើតបាន {valid_count} កូដ!", icon="🎉")
         else:
-            st.warning("សូមបញ្ចូល Secret Key សិន!")
+            st.error("សូមបញ្ចូល Secret Key ជាមុនសិន!")
 
-# === ផ្នែកទី 2: Password (បន្ថែមជាគំរូ) ===
+# === TAB 2: Password Generator ===
 with tab2:
-    st.info("មុខងារបង្កើត Password នឹងដាក់ឱ្យប្រើឆាប់ៗនេះ...")
+    st.write("### Password Generator")
+    length = st.slider("ប្រវែងលេខសម្ងាត់", 8, 32, 12)
+    use_symbols = st.checkbox("ប្រើនិមិត្តសញ្ញា (@#$%)", value=True)
+    
+    if st.button("GENERATE PASSWORD"):
+        chars = string.ascii_letters + string.digits
+        if use_symbols:
+            chars += "!@#$%^&*()"
+        password = "".join(random.choice(chars) for _ in range(length))
+        
+        st.write("### Your Password")
+        st.code(password, language="text")
 
-# === ផ្នែកទី 3: Names (បន្ថែមជាគំរូ) ===
+# === TAB 3: Names (Example) ===
 with tab3:
-    st.info("មុខងារបង្កើតឈ្មោះនឹងដាក់ឱ្យប្រើឆាប់ៗនេះ...")
+    st.write("### Random Name")
+    if st.button("GENERATE NAME"):
+        first_names = ["Sok", "Dara", "Vibol", "Nary", "Bopha", "Mony"]
+        last_names = ["Sao", "Chan", "Keo", "Ly", "Sim", "Chea"]
+        full_name = f"{random.choice(last_names)} {random.choice(first_names)}"
+        
+        st.write("### Result")
+        st.code(full_name, language="text")
 
-# --- 4. Footer (Telegram & Facebook) ---
-st.divider()
+# --- Footer ---
 st.markdown("""
-    <div style="text-align: center; color: grey; font-size: 12px;">
-        created by EM PUNLOK @ 2026 <br><br>
-        <a href="https://t.me/empunlok787" target="_blank" class="footer-link footer-tg">Telegram</a>
-        <a href="https://www.facebook.com/empunlok99" target="_blank" class="footer-link footer-fb">Facebook</a>
+    <div style="text-align: center; margin-top: 30px;">
+        <span style="color: grey; font-size: 12px;">created by EM PUNLOK @ 2026</span><br><br>
+        <a href="https://t.me/empunlok787" target="_blank" style="background-color: #0088cc; color: white; padding: 8px 15px; text-decoration: none; border-radius: 5px; margin-right: 5px;">Telegram</a>
+        <a href="https://www.facebook.com/empunlok99" target="_blank" style="background-color: #1877F2; color: white; padding: 8px 15px; text-decoration: none; border-radius: 5px;">Facebook</a>
     </div>
 """, unsafe_allow_html=True)
