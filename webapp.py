@@ -6,42 +6,36 @@ from datetime import datetime
 # --- 1. Page Configuration ---
 st.set_page_config(page_title="TwoFactor Live", page_icon="🔐", layout="centered")
 
-# --- 2. CSS Styling (ដូច 2Fa.Live 100%) ---
+# --- 2. CSS Styling (Fixed Layout) ---
 st.markdown("""
     <style>
     /* Background Color */
     .stApp { background-color: #ffffff; }
     
-    /* Input Text Area Styling */
+    /* Text Area Styling (Input & Output) */
     .stTextArea textarea {
         background-color: white !important;
         border: 1px solid #ced4da !important;
         border-radius: 4px;
         color: #495057 !important;
         font-family: monospace;
+        font-size: 16px;
     }
 
-    /* Blue Buttons (Submit, Copy, Copy Code) */
+    /* Blue Buttons */
     div.stButton > button {
-        background-color: #0d6efd !important; /* Blue color like 2fa.live */
+        background-color: #0d6efd !important;
         color: white !important;
         font-weight: 500;
         border: none;
         padding: 0.375rem 0.75rem;
         border-radius: 0.25rem;
         font-size: 1rem;
-        width: 100%; /* Full width for Copy buttons */
+        width: 100%;
         transition: all 0.2s;
     }
     div.stButton > button:hover {
         background-color: #0b5ed7 !important;
-    }
-
-    /* Output Box Styling (st.code) to look like Text Area */
-    .stCode {
-        background-color: white !important;
-        border: 1px solid #ced4da !important;
-        border-radius: 4px !important;
     }
     
     /* Labels Styling */
@@ -77,10 +71,11 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
+# Input Box (Height 150 fixed)
 secret_input = st.text_area("input_label", height=150, label_visibility="collapsed", placeholder="BK5V TVQ7 D2RB...")
 
-# === BUTTON: SUBMIT (Small Blue Button) ===
-col_submit, col_dummy = st.columns([1, 4]) # Make button small aligned left
+# === BUTTON: SUBMIT ===
+col_submit, col_dummy = st.columns([1, 4])
 with col_submit:
     if st.button("Submit"):
         if secret_input.strip():
@@ -96,7 +91,7 @@ with col_submit:
                         results.append("Invalid Key")
             st.session_state.output_code = "\n".join(results)
 
-# === BOX 2: OUTPUT ===
+# === BOX 2: OUTPUT (FIXED SIZE) ===
 st.write("")
 st.markdown("""
     <div class="label-style">
@@ -104,27 +99,27 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# បង្ហាញលទ្ធផលក្នុង st.code (ព្រោះវាអាច Copy បាន)
-# ប៉ុន្តែយើងតុបតែងវាឱ្យដូច Text Area ពណ៌ស
-if st.session_state.output_code:
-    st.code(st.session_state.output_code, language="text")
-else:
-    # បង្ហាញប្រអប់ទទេពេលមិនទាន់មានកូដ
-    st.text_area("output_placeholder", height=150, label_visibility="collapsed", placeholder="The code will appear here...", disabled=True)
+# ប្រើ st.text_area ជំនួស st.code ដើម្បីកំណត់ height=150 បាន
+# ធ្វើឱ្យប្រអប់នៅធំដដែល មិនបង្រួម
+st.text_area("output_label", 
+             value=st.session_state.output_code, 
+             height=150, 
+             label_visibility="collapsed", 
+             placeholder="The code will appear here...", 
+             disabled=False) # ដាក់ False ដើម្បីឱ្យគេអាចចូល Copy អក្សរខាងក្នុងបាន
 
-# === BOX 3: BLUE COPY BUTTONS (ដូចរូបភាព) ===
+# === BOX 3: BLUE COPY BUTTONS ===
 st.write("")
-col1, col2, col3 = st.columns([1, 1, 3]) # ដាក់ប៊ូតុង ២ នៅខាងឆ្វេង
+col1, col2, col3 = st.columns([1, 1, 3])
 
 with col1:
     if st.button("Copy"):
-        if st.session_state.output_code:
-            st.toast("Please use the copy icon inside the box! ↗️", icon="📋")
+        # ដោយសារ Browser block ការ copy ផ្ទាល់ យើងដាក់សារប្រាប់
+        st.toast("Please copy the code from the box above manually.", icon="ℹ️")
 
 with col2:
     if st.button("Copy Code"):
-        if st.session_state.output_code:
-            st.toast("Please use the copy icon inside the box! ↗️", icon="📋")
+        st.toast("Please copy the code from the box above manually.", icon="ℹ️")
 
 st.caption("Please save your secret key for future use.")
 
