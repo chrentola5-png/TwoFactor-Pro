@@ -4,54 +4,54 @@ import pytz
 from datetime import datetime
 
 # --- 1. Page Configuration ---
-st.set_page_config(page_title="2Fa.Live", page_icon="🔐", layout="centered")
+st.set_page_config(page_title="TwoFactor Live", page_icon="🔐", layout="centered")
 
-# --- 2. CSS Styling (រចនាឱ្យដូច 2Fa.Live ១០០%) ---
+# --- 2. CSS Styling (ដូច 2Fa.Live 100%) ---
 st.markdown("""
     <style>
-    /* ផ្ទៃខាងក្រោយពណ៌ស */
+    /* Background Color */
     .stApp { background-color: #ffffff; }
     
-    /* Input & Output Text Areas (ពណ៌ស គែមប្រផេះ) */
+    /* Input Text Area Styling */
     .stTextArea textarea {
         background-color: white !important;
         border: 1px solid #ced4da !important;
         border-radius: 4px;
         color: #495057 !important;
         font-family: monospace;
-        font-size: 16px;
     }
 
-    /* ប៊ូតុងពណ៌ខៀវ (Bootstrap Blue ដូចរូបភាព) */
+    /* Blue Buttons (Submit, Copy, Copy Code) */
     div.stButton > button {
-        background-color: #0d6efd !important;
+        background-color: #0d6efd !important; /* Blue color like 2fa.live */
         color: white !important;
         font-weight: 500;
         border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.25rem;
         font-size: 1rem;
-        width: auto; /* មិនឱ្យពេញអេក្រង់ពេក */
-        min-width: 100px;
+        width: 100%; /* Full width for Copy buttons */
+        transition: all 0.2s;
     }
     div.stButton > button:hover {
         background-color: #0b5ed7 !important;
     }
 
-    /* កែ st.code ឱ្យមើលទៅដូចប្រអប់ Copy */
+    /* Output Box Styling (st.code) to look like Text Area */
     .stCode {
-        margin-top: -10px;
+        background-color: white !important;
+        border: 1px solid #ced4da !important;
+        border-radius: 4px !important;
     }
-
-    /* Labels styling */
+    
+    /* Labels Styling */
     .label-style {
         font-size: 16px;
-        font-weight: normal;
-        margin-bottom: 5px;
         color: #212529;
+        margin-bottom: 5px;
     }
     .bold-text { font-weight: bold; }
-    
+
     /* Hide Default Elements */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
@@ -61,10 +61,9 @@ st.markdown("""
 
 # --- 3. Header ---
 st.markdown("""
-    <div style='text-align: center; margin-bottom: 30px;'>
-        <h1 style='color: #333; font-size: 32px; display: inline-block;'>2Fa.Live</h1>
-        <span style='font-size: 14px; color: grey; font-weight: normal; margin-left: 10px;'>Two Factor Authenticator</span>
-    </div>
+    <h2 style='text-align: center; color: #333; margin-bottom: 30px;'>
+        2Fa.Live <span style='font-size: 14px; color: grey; font-weight: normal;'>Two Factor Authenticator</span>
+    </h2>
 """, unsafe_allow_html=True)
 
 # --- 4. Logic & Session State ---
@@ -78,26 +77,26 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-secret_input = st.text_area("input_label", height=120, label_visibility="collapsed", placeholder="BK5V TVQ7 D2RB...")
+secret_input = st.text_area("input_label", height=150, label_visibility="collapsed", placeholder="BK5V TVQ7 D2RB...")
 
-# === BUTTON: SUBMIT ===
-st.write("") # Spacer
-if st.button("Submit"):
-    if secret_input.strip():
-        keys = secret_input.strip().split('\n')
-        results = []
-        for key in keys:
-            key = key.strip()
-            if key:
-                try:
-                    totp = pyotp.TOTP(key.replace(" ", ""))
-                    code = totp.now()
-                    results.append(code)
-                except:
-                    results.append("Invalid Key")
-        st.session_state.output_code = "\n".join(results)
+# === BUTTON: SUBMIT (Small Blue Button) ===
+col_submit, col_dummy = st.columns([1, 4]) # Make button small aligned left
+with col_submit:
+    if st.button("Submit"):
+        if secret_input.strip():
+            keys = secret_input.strip().split('\n')
+            results = []
+            for key in keys:
+                key = key.strip()
+                if key:
+                    try:
+                        totp = pyotp.TOTP(key.replace(" ", ""))
+                        results.append(totp.now())
+                    except:
+                        results.append("Invalid Key")
+            st.session_state.output_code = "\n".join(results)
 
-# === BOX 2: OUTPUT & COPY BUTTONS ===
+# === BOX 2: OUTPUT ===
 st.write("")
 st.markdown("""
     <div class="label-style">
@@ -105,31 +104,33 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# ប្រអប់លទ្ធផល (Output Box)
-st.text_area("output_display", value=st.session_state.output_code, height=120, label_visibility="collapsed", placeholder="The code will appear here...", disabled=True)
-
-# === COPY SECTION (នៅខាងក្រោមដូចរូប) ===
+# បង្ហាញលទ្ធផលក្នុង st.code (ព្រោះវាអាច Copy បាន)
+# ប៉ុន្តែយើងតុបតែងវាឱ្យដូច Text Area ពណ៌ស
 if st.session_state.output_code:
-    st.write("")
-    # ប្រើ Columns ដើម្បីដាក់ប៊ូតុង Copy នៅខាងឆ្វេង (ដូចរូប)
-    col1, col2 = st.columns([1, 4])
-    with col1:
-        # st.code គឺជា "ប៊ូតុង Copy" ដ៏ល្អបំផុតនៅក្នុង Streamlit
-        # វាមាន Icon Copy នៅជ្រុងខាងស្តាំស្រាប់
-        st.caption("Copy here:")
-        st.code(st.session_state.output_code, language="text")
-    
-    with col2:
-        # បន្ថែមប៊ូតុង Clear នៅក្បែរនោះ
-        st.write("") # Spacer ឱ្យស្មើគ្នា
-        st.write("")
-        if st.button("Clear / Reset"):
-            st.session_state.output_code = ""
-            st.rerun()
+    st.code(st.session_state.output_code, language="text")
+else:
+    # បង្ហាញប្រអប់ទទេពេលមិនទាន់មានកូដ
+    st.text_area("output_placeholder", height=150, label_visibility="collapsed", placeholder="The code will appear here...", disabled=True)
+
+# === BOX 3: BLUE COPY BUTTONS (ដូចរូបភាព) ===
+st.write("")
+col1, col2, col3 = st.columns([1, 1, 3]) # ដាក់ប៊ូតុង ២ នៅខាងឆ្វេង
+
+with col1:
+    if st.button("Copy"):
+        if st.session_state.output_code:
+            st.toast("Please use the copy icon inside the box! ↗️", icon="📋")
+
+with col2:
+    if st.button("Copy Code"):
+        if st.session_state.output_code:
+            st.toast("Please use the copy icon inside the box! ↗️", icon="📋")
+
+st.caption("Please save your secret key for future use.")
 
 # --- Footer ---
 st.markdown("""
     <div style="text-align: center; margin-top: 50px; border-top: 1px solid #eee; padding-top: 20px;">
-        <p style="color: grey; font-size: 12px;">© 2026 TwoFactor Live Clone.</p>
+        <p style="color: grey; font-size: 12px;">© 2026 TwoFactor Live Clone. All rights reserved.</p>
     </div>
 """, unsafe_allow_html=True)
