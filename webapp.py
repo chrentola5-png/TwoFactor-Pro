@@ -4,55 +4,60 @@ import pytz
 from datetime import datetime
 
 # --- 1. Page Configuration ---
-st.set_page_config(page_title="TwoFactor Pro", page_icon="🔐", layout="centered")
+st.set_page_config(page_title="TwoFactor Live", page_icon="🔐", layout="centered")
 
-# --- 2. CSS Styling (Clean & Professional) ---
+# --- 2. CSS Styling (Like 2Fa.Live) ---
 st.markdown("""
     <style>
     /* Background Color */
-    .stApp { background-color: #f0f2f6; }
+    .stApp { background-color: #ffffff; }
     
     /* Input & Output Text Areas */
     .stTextArea textarea {
         background-color: white !important;
-        border: 1px solid #ccc !important;
-        border-radius: 5px;
-        color: black !important;
+        border: 1px solid #ced4da !important;
+        border-radius: 4px;
+        color: #495057 !important;
         font-family: monospace;
     }
 
-    /* Submit Button */
+    /* Blue Submit Button (Like 2Fa.Live) */
     div.stButton > button {
-        background-color: #007bff !important; /* Blue color like 2Fa.Live */
+        background-color: #0d6efd !important;
         color: white !important;
-        font-weight: bold;
+        font-weight: 500;
         border: none;
-        width: 100%;
-        padding: 10px;
-        border-radius: 5px;
-        font-size: 16px;
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.25rem;
+        font-size: 1rem;
+        transition: color .15s ease-in-out,background-color .15s ease-in-out;
     }
     div.stButton > button:hover {
-        background-color: #0056b3 !important;
+        background-color: #0b5ed7 !important;
     }
 
-    /* Remove Streamlit Branding */
+    /* Labels styling */
+    .label-style {
+        font-size: 16px;
+        font-weight: normal;
+        margin-bottom: 5px;
+        color: #212529;
+    }
+    .bold-text { font-weight: bold; }
+    
+    /* Remove Streamlit default elements */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. Header & Clock ---
-tz = pytz.timezone('Asia/Phnom_Penh')
-current_time = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
-
-st.markdown(f"""
-    <div style="background-color: #E91E63; padding: 15px; border-radius: 8px 8px 0 0; 
-                display: flex; justify-content: space-between; align-items: center; color: white; margin-bottom: 20px;">
-        <div style="font-size: 20px; font-weight: bold;">TwoFactor <span style="color:#ffeb3b;">Live</span></div>
-        <div style="font-size: 14px; font-family: monospace;">{current_time}</div>
-    </div>
+# --- 3. Header ---
+# Simple header like the website
+st.markdown("""
+    <h2 style='text-align: center; color: #333; margin-bottom: 30px;'>
+        2Fa.Live <span style='font-size: 14px; color: grey; font-weight: normal;'>Two Factor Authenticator</span>
+    </h2>
 """, unsafe_allow_html=True)
 
 # --- 4. Logic & Session State ---
@@ -60,11 +65,16 @@ if 'output_code' not in st.session_state:
     st.session_state.output_code = ""
 
 # === BOX 1: INPUT ===
-st.markdown("### 2FA Secret")
-st.caption("Get code for two factor authentication easiest - Please store your 2FA secret safely")
-secret_input = st.text_area("input_label", height=150, label_visibility="collapsed", placeholder="Example: JBSWY3DPEHPK3PXP...")
+st.markdown("""
+    <div class="label-style">
+        <span class="bold-text">* 2FA Secret</span> Get code for two factor authentication easiest - Please store your 2FA secret safely
+    </div>
+""", unsafe_allow_html=True)
+
+secret_input = st.text_area("input_label", height=150, label_visibility="collapsed", placeholder="BK5V TVQ7 D2RB...")
 
 # === BUTTON: SUBMIT ===
+st.write("") # Spacer
 if st.button("Submit"):
     if secret_input.strip():
         keys = secret_input.strip().split('\n')
@@ -75,33 +85,34 @@ if st.button("Submit"):
                 try:
                     totp = pyotp.TOTP(key.replace(" ", ""))
                     code = totp.now()
+                    # Format: 000 000 (with space) or just 000000
                     results.append(code)
                 except:
                     results.append("Invalid Key")
         
-        # Save to session state to display in the second box
+        # Save to session state
         st.session_state.output_code = "\n".join(results)
-    else:
-        st.warning("Please enter your secret key first.")
 
 # === BOX 2: OUTPUT ===
-st.markdown("### 2FA Code")
-st.caption("2-step verification code")
+st.write("") # Spacer
+st.markdown("""
+    <div class="label-style">
+        <span class="bold-text">* 2FA Code</span> 2-step verification code
+    </div>
+""", unsafe_allow_html=True)
 
-# Display the result in a text area (Copyable)
+# Display result
 st.text_area("output_label", value=st.session_state.output_code, height=150, label_visibility="collapsed", placeholder="The code will appear here...")
 
-# Quick Copy Button (Optional but useful)
+# === COPY BUTTON ===
 if st.session_state.output_code:
-    st.markdown("---")
-    st.caption("Click to copy codes:")
+    st.write("")
+    st.caption("Click the icon below to copy:")
     st.code(st.session_state.output_code, language="text")
 
 # --- Footer ---
 st.markdown("""
-    <div style="text-align: center; margin-top: 40px; border-top: 1px solid #ccc; padding-top: 10px;">
-        <p style="color: grey; font-size: 12px;">© 2026 TwoFactor Pro. All rights reserved.</p>
-        <a href="https://t.me/empunlok787" target="_blank" style="text-decoration: none; color: #0088cc; font-weight: bold; margin-right: 15px;">Telegram</a>
-        <a href="https://www.facebook.com/empunlok99" target="_blank" style="text-decoration: none; color: #1877F2; font-weight: bold;">Facebook</a>
+    <div style="text-align: center; margin-top: 50px; border-top: 1px solid #eee; padding-top: 20px;">
+        <p style="color: grey; font-size: 12px;">© 2026 TwoFactor Live Clone. All rights reserved.</p>
     </div>
 """, unsafe_allow_html=True)
