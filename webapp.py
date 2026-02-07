@@ -6,13 +6,13 @@ from datetime import datetime
 # --- 1. Page Configuration ---
 st.set_page_config(page_title="TwoFactor Live", page_icon="🔐", layout="centered")
 
-# --- 2. CSS Styling (Like 2Fa.Live) ---
+# --- 2. CSS Styling (Clean & Professional) ---
 st.markdown("""
     <style>
     /* Background Color */
     .stApp { background-color: #ffffff; }
     
-    /* Input Text Area */
+    /* Input & Output Text Areas */
     .stTextArea textarea {
         background-color: white !important;
         border: 1px solid #ced4da !important;
@@ -36,18 +36,6 @@ st.markdown("""
         background-color: #0b5ed7 !important;
     }
 
-    /* Code Block (Output Box) Styling to look like Text Area */
-    .stCode {
-        background-color: white !important;
-        border: 1px solid #ced4da !important;
-        border-radius: 4px !important;
-    }
-    code {
-        color: #495057 !important;
-        font-family: monospace !important;
-        font-size: 16px !important; 
-    }
-
     /* Labels styling */
     .label-style {
         font-size: 16px;
@@ -57,7 +45,7 @@ st.markdown("""
     }
     .bold-text { font-weight: bold; }
     
-    /* Remove Streamlit default elements */
+    /* Hide Default Elements */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
@@ -82,7 +70,7 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-secret_input = st.text_area("input_label", height=150, label_visibility="collapsed", placeholder="BK5V TVQ7 D2RB...")
+secret_input = st.text_area("input_label", height=150, label_visibility="collapsed", placeholder="Example: BK5V TVQ7 D2RB...")
 
 # === BUTTONS: SUBMIT & CLEAR ===
 col1, col2 = st.columns([4, 1])
@@ -109,21 +97,23 @@ with col2:
         st.session_state.output_code = ""
         st.rerun()
 
-# === BOX 2: OUTPUT (WITH COPY FEATURE) ===
-st.write("") # Spacer
+# === BOX 2: OUTPUT (VISUAL ONLY) ===
+st.write("")
 st.markdown("""
     <div class="label-style">
         <span class="bold-text">* 2FA Code</span> 2-step verification code
     </div>
 """, unsafe_allow_html=True)
 
-# ប្រសិនបើមានកូដ យើងប្រើ st.code (ព្រោះវាមានប៊ូតុង Copy)
-# ប្រសិនបើអត់មាន យើងបង្ហាញប្រអប់ទទេ
+# បង្ហាញលទ្ធផលក្នុង Text Area (ដើម្បីឱ្យស្អាតដូច input)
+st.text_area("output_display", value=st.session_state.output_code, height=150, label_visibility="collapsed", placeholder="The code will appear here...", disabled=True)
+
+# === BOX 3: COPY SECTION (នៅខាងក្រោម) ===
+# នេះជាកន្លែង Copy នៅខាងក្រោមប្រអប់ ដូចដែលអ្នកចង់បាន
 if st.session_state.output_code:
+    st.write("") # ចន្លោះ
+    st.info("👇 **Click the copy icon below:**") # ដាក់សញ្ញាប្រាប់
     st.code(st.session_state.output_code, language="text")
-    st.caption("👆 Click the icon in the top-right corner to copy.")
-else:
-    st.text_area("output_placeholder", height=150, label_visibility="collapsed", placeholder="The code will appear here...", disabled=True)
 
 # --- Footer ---
 st.markdown("""
