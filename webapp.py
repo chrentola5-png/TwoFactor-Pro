@@ -12,7 +12,7 @@ st.markdown("""
     /* Background Color */
     .stApp { background-color: #ffffff; }
     
-    /* Input & Output Text Areas */
+    /* Input Text Area */
     .stTextArea textarea {
         background-color: white !important;
         border: 1px solid #ced4da !important;
@@ -21,7 +21,7 @@ st.markdown("""
         font-family: monospace;
     }
 
-    /* Blue Submit Button (Like 2Fa.Live) */
+    /* Blue Submit Button */
     div.stButton > button {
         background-color: #0d6efd !important;
         color: white !important;
@@ -30,10 +30,22 @@ st.markdown("""
         padding: 0.375rem 0.75rem;
         border-radius: 0.25rem;
         font-size: 1rem;
-        transition: color .15s ease-in-out,background-color .15s ease-in-out;
+        width: 100%;
     }
     div.stButton > button:hover {
         background-color: #0b5ed7 !important;
+    }
+
+    /* Code Block (Output Box) Styling to look like Text Area */
+    .stCode {
+        background-color: white !important;
+        border: 1px solid #ced4da !important;
+        border-radius: 4px !important;
+    }
+    code {
+        color: #495057 !important;
+        font-family: monospace !important;
+        font-size: 16px !important; 
     }
 
     /* Labels styling */
@@ -53,7 +65,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- 3. Header ---
-# Simple header like the website
 st.markdown("""
     <h2 style='text-align: center; color: #333; margin-bottom: 30px;'>
         2Fa.Live <span style='font-size: 14px; color: grey; font-weight: normal;'>Two Factor Authenticator</span>
@@ -73,27 +84,32 @@ st.markdown("""
 
 secret_input = st.text_area("input_label", height=150, label_visibility="collapsed", placeholder="BK5V TVQ7 D2RB...")
 
-# === BUTTON: SUBMIT ===
-st.write("") # Spacer
-if st.button("Submit"):
-    if secret_input.strip():
-        keys = secret_input.strip().split('\n')
-        results = []
-        for key in keys:
-            key = key.strip()
-            if key:
-                try:
-                    totp = pyotp.TOTP(key.replace(" ", ""))
-                    code = totp.now()
-                    # Format: 000 000 (with space) or just 000000
-                    results.append(code)
-                except:
-                    results.append("Invalid Key")
-        
-        # Save to session state
-        st.session_state.output_code = "\n".join(results)
+# === BUTTONS: SUBMIT & CLEAR ===
+col1, col2 = st.columns([4, 1])
+with col1:
+    if st.button("Submit"):
+        if secret_input.strip():
+            keys = secret_input.strip().split('\n')
+            results = []
+            for key in keys:
+                key = key.strip()
+                if key:
+                    try:
+                        totp = pyotp.TOTP(key.replace(" ", ""))
+                        code = totp.now()
+                        results.append(code)
+                    except:
+                        results.append("Invalid Key")
+            st.session_state.output_code = "\n".join(results)
+        else:
+            st.warning("Please enter your secret key first.")
 
-# === BOX 2: OUTPUT ===
+with col2:
+    if st.button("Clear"):
+        st.session_state.output_code = ""
+        st.rerun()
+
+# === BOX 2: OUTPUT (WITH COPY FEATURE) ===
 st.write("") # Spacer
 st.markdown("""
     <div class="label-style">
@@ -101,14 +117,13 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Display result
-st.text_area("output_label", value=st.session_state.output_code, height=150, label_visibility="collapsed", placeholder="The code will appear here...")
-
-# === COPY BUTTON ===
+# ប្រសិនបើមានកូដ យើងប្រើ st.code (ព្រោះវាមានប៊ូតុង Copy)
+# ប្រសិនបើអត់មាន យើងបង្ហាញប្រអប់ទទេ
 if st.session_state.output_code:
-    st.write("")
-    st.caption("Click the icon below to copy:")
     st.code(st.session_state.output_code, language="text")
+    st.caption("👆 Click the icon in the top-right corner to copy.")
+else:
+    st.text_area("output_placeholder", height=150, label_visibility="collapsed", placeholder="The code will appear here...", disabled=True)
 
 # --- Footer ---
 st.markdown("""
