@@ -1,162 +1,106 @@
 import streamlit as st
 import pyotp
-import random
-import string
-from datetime import datetime
 import pytz
+from datetime import datetime
 
 # --- 1. ការកំណត់ទំព័រ ---
 st.set_page_config(page_title="TwoFactor Pro", page_icon="🔐", layout="centered")
 
-# --- 2. CSS (តុបតែងឱ្យដូចកម្មវិធី Desktop ១០០%) ---
+# --- 2. CSS (តុបតែងឱ្យស្អាតដូច 2FA.Live) ---
 st.markdown("""
     <style>
-    /* ផ្ទៃខាងក្រោយពណ៌ផ្កាឈូកស្រាល */
+    /* ផ្ទៃខាងក្រោយ */
     .stApp { background-color: #FFF0F5; }
     
-    /* កែពណ៌ Tabs ឱ្យទៅជាពណ៌ប្រផេះ/ផ្កាឈូក */
-    button[data-baseweb="tab"] {
-        background-color: transparent;
-        color: #000;
-        font-weight: bold;
-        font-size: 14px;
-    }
-    button[data-baseweb="tab"][aria-selected="true"] {
-        background-color: #E91E63;
-        color: white;
-        border-radius: 5px 5px 0 0;
+    /* តុបតែងប្រអប់ Text Area ទាំងពីរឱ្យពណ៌ស និងមានគែម */
+    .stTextArea textarea {
+        background-color: white !important;
+        border: 1px solid #ccc !important;
+        border-radius: 5px;
+        color: black !important;
+        font-size: 16px;
     }
 
-    /* ប្រអប់កណ្តាលពណ៌ប្រផេះ (Gray Card Container) */
-    .block-container {
-        background-color: #E0E0E0;
-        padding: 2rem;
-        border-radius: 15px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        max-width: 700px;
-    }
-
-    /* ប៊ូតុងពណ៌ផ្កាឈូក (ដូច Desktop) */
+    /* ប៊ូតុង Submit ពណ៌ខៀវ/ផ្កាឈូក */
     div.stButton > button {
-        background-color: #E91E63 !important;
+        background-color: #007bff !important; /* ដាក់ពណ៌ខៀវដូច 2fa.live */
         color: white !important;
         font-weight: bold;
         border: none;
-        width: 100%;
-        height: 45px;
+        width: 150px;
+        height: 40px;
         border-radius: 5px;
         font-size: 16px;
-        transition: 0.3s;
     }
     div.stButton > button:hover {
-        background-color: #C2185B !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-
-    /* ប្រអប់ Input ពណ៌ស */
-    .stTextArea textarea, .stTextInput input {
-        background-color: white !important;
-        color: black !important;
-        border-radius: 5px;
+        background-color: #0056b3 !important;
     }
     
-    /* ផ្លាស់ប្តូរពណ៌ចំណងជើង */
-    h3 { color: #E91E63 !important; font-size: 18px; margin-bottom: 5px; }
-
-    /* លាក់ Element មិនចាំបាច់របស់ Streamlit */
+    /* លាក់ Element មិនចាំបាច់ */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. Header & Clock (ក្បាលខាងលើ) ---
+# --- 3. Header & Clock ---
 tz = pytz.timezone('Asia/Phnom_Penh')
 current_time = datetime.now(tz).strftime("%b %d %I:%M:%S %p")
 
 st.markdown(f"""
     <div style="background-color: #E91E63; padding: 15px; border-radius: 10px 10px 0 0; 
-                display: flex; justify-content: space-between; align-items: center; color: white; 
-                margin-bottom: -20px; position: relative; z-index: 100;">
-        <div style="font-size: 22px; font-weight: bold; color: yellow;">TwoFactor <span style="color:yellow;">Pro</span></div>
+                display: flex; justify-content: space-between; align-items: center; color: white; margin-bottom: 20px;">
+        <div style="font-size: 22px; font-weight: bold; color: yellow;">TwoFactor <span style="color:white;">Live</span></div>
         <div style="font-size: 14px;">{current_time}</div>
     </div>
-    <br>
 """, unsafe_allow_html=True)
 
-# --- 4. ផ្នែក Tabs (មុខងារសំខាន់) ---
-tab1, tab2, tab3 = st.tabs(["🔐 2FA", "🔑 Password", "📝 Names"])
+# --- 4. Logic សម្រាប់រក្សាទុកតម្លៃ (Session State) ---
+if 'generated_code' not in st.session_state:
+    st.session_state.generated_code = ""
 
-# === TAB 1: 2FA Generator ===
-with tab1:
-    st.markdown("### Secret Keys")
-    secret_input = st.text_area("2fa_input", height=120, label_visibility="collapsed", placeholder="Paste secret keys here...")
-    
-    if st.button("GENERATE CODES"):
-        if secret_input.strip():
-            keys = secret_input.strip().split('\n')
-            result_text = ""
-            for key in keys:
-                key = key.strip()
-                if key:
-                    try:
-                        totp = pyotp.TOTP(key.replace(" ", ""))
-                        result_text += f"{totp.now()}\n"
-                    except:
-                        result_text += "Invalid Key\n"
-            
-            st.markdown("### Codes")
-            # st.code មានប៊ូតុង Copy នៅជ្រុងខាងស្តាំស្រាប់ (ល្អបំផុតសម្រាប់ Web)
-            st.code(result_text, language="text")
-        else:
-            st.warning("សូមបញ្ចូល Secret Key ជាមុនសិន!")
+# === ប្រអប់ទី ១: 2FA Secret (Input) ===
+st.markdown("##### * 2FA Secret (ដាក់ Secret Key នៅទីនេះ)")
+secret_input = st.text_area("input_box", height=150, label_visibility="collapsed", placeholder="Example: BK5V TVQ7 D2RB...")
 
-# === TAB 2: Password Generator ===
-with tab2:
-    st.markdown("### Password Options")
-    col1, col2 = st.columns(2)
-    with col1:
-        length = st.slider("Length (ប្រវែង)", 8, 32, 12)
-    with col2:
-        use_symbols = st.checkbox("Symbols (!@#)", value=True)
-        use_digits = st.checkbox("Numbers (123)", value=True)
-    
-    if st.button("GENERATE PASSWORD"):
-        chars = string.ascii_letters
-        if use_digits: chars += string.digits
-        if use_symbols: chars += "!@#$%^&*()"
+# === ប៊ូតុង Submit (នៅកណ្តាល) ===
+if st.button("Submit"):
+    if secret_input.strip():
+        keys = secret_input.strip().split('\n')
+        results = []
+        for key in keys:
+            key = key.strip()
+            if key:
+                try:
+                    totp = pyotp.TOTP(key.replace(" ", ""))
+                    code = totp.now()
+                    # បង្ហាញតែលេខកូដសុទ្ធ (ដូច 2fa.live)
+                    results.append(code) 
+                except:
+                    results.append("Invalid Key")
         
-        password = "".join(random.choice(chars) for _ in range(length))
-        st.markdown("### Your Password")
-        st.code(password, language="text")
+        # បញ្ចូលលទ្ធផលទៅក្នុង Session State ដើម្បីបង្ហាញនៅប្រអប់ទី ២
+        st.session_state.generated_code = "\n".join(results)
+    else:
+        st.warning("សូមបញ្ចូល Secret Key ជាមុនសិន!")
 
-# === TAB 3: Random Names ===
-with tab3:
-    st.markdown("### Generate Name")
-    col1, col2 = st.columns(2)
-    with col1:
-        gender = st.selectbox("ភេទ", ["Male", "Female", "Any"])
-    with col2:
-        count = st.number_input("ចំនួនឈ្មោះ", 1, 50, 5)
-        
-    if st.button("GENERATE NAMES"):
-        # ទិន្នន័យឈ្មោះគំរូ
-        first_names = ["Sok", "Dara", "Vibol", "Nary", "Bopha", "Mony", "Visal", "Chea", "Pov", "Roth"]
-        last_names = ["Sao", "Chan", "Keo", "Ly", "Sim", "Heng", "Lim", "Kong", "Meas", "Seng"]
-        
-        results = ""
-        for _ in range(count):
-            name = f"{random.choice(last_names)} {random.choice(first_names)}"
-            results += name + "\n"
-            
-        st.markdown("### Result Names")
-        st.code(results, language="text")
+# === ប្រអប់ទី ២: 2FA Code (Output) ===
+st.markdown("##### * 2FA Code (លទ្ធផលកូដ)")
+# ប្រអប់នេះបង្ហាញតម្លៃចេញពី Session State
+st.text_area("output_box", value=st.session_state.generated_code, height=150, label_visibility="collapsed", placeholder="The code will appear here...")
 
-# --- 5. Footer (ប៊ូតុងខាងក្រោម) ---
+# === ប៊ូតុង Copy ===
+# ដោយសារ Text Area មិនមានប៊ូតុង Copy ស្វ័យប្រវត្តិ ខ្ញុំដាក់ st.code បន្ថែមនៅខាងក្រោម
+# ដើម្បីឱ្យអ្នកងាយស្រួលចុច Copy តែម្តង
+if st.session_state.generated_code:
+    st.write("---")
+    st.caption("ចុចប៊ូតុងខាងក្រោមដើម្បី Copy លឿនៗ:")
+    st.code(st.session_state.generated_code, language="text")
+
+# --- Footer ---
 st.markdown("""
-    <div style="text-align: center; margin-top: 30px;">
-        <div style="color: grey; font-size: 12px; margin-bottom: 10px;">created by EM PUNLOK @ 2026</div>
-        <a href="https://t.me/empunlok787" target="_blank" style="background-color: #0088cc; color: white; padding: 8px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-weight: bold;">Telegram</a>
-        <a href="https://www.facebook.com/empunlok99" target="_blank" style="background-color: #1877F2; color: white; padding: 8px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-weight: bold;">Facebook</a>
+    <div style="text-align: center; margin-top: 30px; color: grey; font-size: 12px;">
+        created by EM PUNLOK @ 2026<br>
+        <a href="https://t.me/empunlok787">Telegram</a> | <a href="https://www.facebook.com/empunlok99">Facebook</a>
     </div>
 """, unsafe_allow_html=True)
