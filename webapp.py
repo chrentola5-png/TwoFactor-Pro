@@ -4,36 +4,43 @@ import pytz
 from datetime import datetime
 
 # --- 1. Page Configuration ---
-st.set_page_config(page_title="TwoFactor Live", page_icon="🔐", layout="centered")
+st.set_page_config(page_title="2Fa.Live", page_icon="🔐", layout="centered")
 
-# --- 2. CSS Styling (Clean & Professional) ---
+# --- 2. CSS Styling (រចនាឱ្យដូច 2Fa.Live ១០០%) ---
 st.markdown("""
     <style>
-    /* Background Color */
+    /* ផ្ទៃខាងក្រោយពណ៌ស */
     .stApp { background-color: #ffffff; }
     
-    /* Input & Output Text Areas */
+    /* Input & Output Text Areas (ពណ៌ស គែមប្រផេះ) */
     .stTextArea textarea {
         background-color: white !important;
         border: 1px solid #ced4da !important;
         border-radius: 4px;
         color: #495057 !important;
         font-family: monospace;
+        font-size: 16px;
     }
 
-    /* Blue Submit Button */
+    /* ប៊ូតុងពណ៌ខៀវ (Bootstrap Blue ដូចរូបភាព) */
     div.stButton > button {
         background-color: #0d6efd !important;
         color: white !important;
         font-weight: 500;
         border: none;
-        padding: 0.375rem 0.75rem;
-        border-radius: 0.25rem;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
         font-size: 1rem;
-        width: 100%;
+        width: auto; /* មិនឱ្យពេញអេក្រង់ពេក */
+        min-width: 100px;
     }
     div.stButton > button:hover {
         background-color: #0b5ed7 !important;
+    }
+
+    /* កែ st.code ឱ្យមើលទៅដូចប្រអប់ Copy */
+    .stCode {
+        margin-top: -10px;
     }
 
     /* Labels styling */
@@ -54,9 +61,10 @@ st.markdown("""
 
 # --- 3. Header ---
 st.markdown("""
-    <h2 style='text-align: center; color: #333; margin-bottom: 30px;'>
-        2Fa.Live <span style='font-size: 14px; color: grey; font-weight: normal;'>Two Factor Authenticator</span>
-    </h2>
+    <div style='text-align: center; margin-bottom: 30px;'>
+        <h1 style='color: #333; font-size: 32px; display: inline-block;'>2Fa.Live</h1>
+        <span style='font-size: 14px; color: grey; font-weight: normal; margin-left: 10px;'>Two Factor Authenticator</span>
+    </div>
 """, unsafe_allow_html=True)
 
 # --- 4. Logic & Session State ---
@@ -70,34 +78,26 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-secret_input = st.text_area("input_label", height=150, label_visibility="collapsed", placeholder="Example: BK5V TVQ7 D2RB...")
+secret_input = st.text_area("input_label", height=120, label_visibility="collapsed", placeholder="BK5V TVQ7 D2RB...")
 
-# === BUTTONS: SUBMIT & CLEAR ===
-col1, col2 = st.columns([4, 1])
-with col1:
-    if st.button("Submit"):
-        if secret_input.strip():
-            keys = secret_input.strip().split('\n')
-            results = []
-            for key in keys:
-                key = key.strip()
-                if key:
-                    try:
-                        totp = pyotp.TOTP(key.replace(" ", ""))
-                        code = totp.now()
-                        results.append(code)
-                    except:
-                        results.append("Invalid Key")
-            st.session_state.output_code = "\n".join(results)
-        else:
-            st.warning("Please enter your secret key first.")
+# === BUTTON: SUBMIT ===
+st.write("") # Spacer
+if st.button("Submit"):
+    if secret_input.strip():
+        keys = secret_input.strip().split('\n')
+        results = []
+        for key in keys:
+            key = key.strip()
+            if key:
+                try:
+                    totp = pyotp.TOTP(key.replace(" ", ""))
+                    code = totp.now()
+                    results.append(code)
+                except:
+                    results.append("Invalid Key")
+        st.session_state.output_code = "\n".join(results)
 
-with col2:
-    if st.button("Clear"):
-        st.session_state.output_code = ""
-        st.rerun()
-
-# === BOX 2: OUTPUT (VISUAL ONLY) ===
+# === BOX 2: OUTPUT & COPY BUTTONS ===
 st.write("")
 st.markdown("""
     <div class="label-style">
@@ -105,19 +105,31 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# បង្ហាញលទ្ធផលក្នុង Text Area (ដើម្បីឱ្យស្អាតដូច input)
-st.text_area("output_display", value=st.session_state.output_code, height=150, label_visibility="collapsed", placeholder="The code will appear here...", disabled=True)
+# ប្រអប់លទ្ធផល (Output Box)
+st.text_area("output_display", value=st.session_state.output_code, height=120, label_visibility="collapsed", placeholder="The code will appear here...", disabled=True)
 
-# === BOX 3: COPY SECTION (នៅខាងក្រោម) ===
-# នេះជាកន្លែង Copy នៅខាងក្រោមប្រអប់ ដូចដែលអ្នកចង់បាន
+# === COPY SECTION (នៅខាងក្រោមដូចរូប) ===
 if st.session_state.output_code:
-    st.write("") # ចន្លោះ
-    st.info("👇 **Click the copy icon below:**") # ដាក់សញ្ញាប្រាប់
-    st.code(st.session_state.output_code, language="text")
+    st.write("")
+    # ប្រើ Columns ដើម្បីដាក់ប៊ូតុង Copy នៅខាងឆ្វេង (ដូចរូប)
+    col1, col2 = st.columns([1, 4])
+    with col1:
+        # st.code គឺជា "ប៊ូតុង Copy" ដ៏ល្អបំផុតនៅក្នុង Streamlit
+        # វាមាន Icon Copy នៅជ្រុងខាងស្តាំស្រាប់
+        st.caption("Copy here:")
+        st.code(st.session_state.output_code, language="text")
+    
+    with col2:
+        # បន្ថែមប៊ូតុង Clear នៅក្បែរនោះ
+        st.write("") # Spacer ឱ្យស្មើគ្នា
+        st.write("")
+        if st.button("Clear / Reset"):
+            st.session_state.output_code = ""
+            st.rerun()
 
 # --- Footer ---
 st.markdown("""
     <div style="text-align: center; margin-top: 50px; border-top: 1px solid #eee; padding-top: 20px;">
-        <p style="color: grey; font-size: 12px;">© 2026 TwoFactor Live Clone. All rights reserved.</p>
+        <p style="color: grey; font-size: 12px;">© 2026 TwoFactor Live Clone.</p>
     </div>
 """, unsafe_allow_html=True)
