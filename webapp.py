@@ -3,16 +3,16 @@ import pyotp
 import pytz
 from datetime import datetime
 
-# --- 1. Page Configuration ---
-st.set_page_config(page_title="TwoFactor Live", page_icon="🔐", layout="centered")
+# --- 1. Page Configuration (ប្តូរឈ្មោះ Tab មកដើមវិញ) ---
+st.set_page_config(page_title="TwoFactor Pro", page_icon="🔐", layout="centered")
 
-# --- 2. CSS Styling (Fixed Layout) ---
+# --- 2. CSS Styling (Blue & White Theme) ---
 st.markdown("""
     <style>
     /* Background Color */
     .stApp { background-color: #ffffff; }
     
-    /* Text Area Styling (Input & Output) */
+    /* Text Area Styling */
     .stTextArea textarea {
         background-color: white !important;
         border: 1px solid #ced4da !important;
@@ -53,10 +53,10 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. Header ---
+# --- 3. Header (ប្តូរឈ្មោះមក TwoFactor Pro វិញ) ---
 st.markdown("""
     <h2 style='text-align: center; color: #333; margin-bottom: 30px;'>
-        2Fa.Live <span style='font-size: 14px; color: grey; font-weight: normal;'>Two Factor Authenticator</span>
+        TwoFactor <span style='color: #0d6efd;'>Pro</span> <span style='font-size: 14px; color: grey; font-weight: normal;'>Online Tool</span>
     </h2>
 """, unsafe_allow_html=True)
 
@@ -67,17 +67,16 @@ if 'output_code' not in st.session_state:
 # === BOX 1: INPUT ===
 st.markdown("""
     <div class="label-style">
-        <span class="bold-text">* 2FA Secret</span> Get code for two factor authentication easiest - Please store your 2FA secret safely
+        <span class="bold-text">* Secret Keys</span> (Paste your keys here)
     </div>
 """, unsafe_allow_html=True)
 
-# Input Box (Height 150 fixed)
-secret_input = st.text_area("input_label", height=150, label_visibility="collapsed", placeholder="BK5V TVQ7 D2RB...")
+secret_input = st.text_area("input_label", height=150, label_visibility="collapsed", placeholder="Example: BK5V TVQ7 D2RB...")
 
 # === BUTTON: SUBMIT ===
 col_submit, col_dummy = st.columns([1, 4])
 with col_submit:
-    if st.button("Submit"):
+    if st.button("Generate Code"):
         if secret_input.strip():
             keys = secret_input.strip().split('\n')
             results = []
@@ -91,22 +90,20 @@ with col_submit:
                         results.append("Invalid Key")
             st.session_state.output_code = "\n".join(results)
 
-# === BOX 2: OUTPUT (FIXED SIZE) ===
+# === BOX 2: OUTPUT (Fixed Size) ===
 st.write("")
 st.markdown("""
     <div class="label-style">
-        <span class="bold-text">* 2FA Code</span> 2-step verification code
+        <span class="bold-text">* 2FA Codes</span> (Result)
     </div>
 """, unsafe_allow_html=True)
 
-# ប្រើ st.text_area ជំនួស st.code ដើម្បីកំណត់ height=150 បាន
-# ធ្វើឱ្យប្រអប់នៅធំដដែល មិនបង្រួម
 st.text_area("output_label", 
              value=st.session_state.output_code, 
              height=150, 
              label_visibility="collapsed", 
-             placeholder="The code will appear here...", 
-             disabled=False) # ដាក់ False ដើម្បីឱ្យគេអាចចូល Copy អក្សរខាងក្នុងបាន
+             placeholder="Codes will appear here...", 
+             disabled=False)
 
 # === BOX 3: BLUE COPY BUTTONS ===
 st.write("")
@@ -114,18 +111,15 @@ col1, col2, col3 = st.columns([1, 1, 3])
 
 with col1:
     if st.button("Copy"):
-        # ដោយសារ Browser block ការ copy ផ្ទាល់ យើងដាក់សារប្រាប់
-        st.toast("Please copy the code from the box above manually.", icon="ℹ️")
+        st.toast("Please copy manually from the box above.", icon="ℹ️")
 
 with col2:
     if st.button("Copy Code"):
-        st.toast("Please copy the code from the box above manually.", icon="ℹ️")
+        st.toast("Please copy manually from the box above.", icon="ℹ️")
 
-st.caption("Please save your secret key for future use.")
-
-# --- Footer ---
+# --- Footer (ដាក់ឈ្មោះម្ចាស់ដើម) ---
 st.markdown("""
     <div style="text-align: center; margin-top: 50px; border-top: 1px solid #eee; padding-top: 20px;">
-        <p style="color: grey; font-size: 12px;">© 2026 TwoFactor Live Clone. All rights reserved.</p>
+        <p style="color: grey; font-size: 12px;">© 2026 TwoFactor Pro. Created by EM PUNLOK.</p>
     </div>
 """, unsafe_allow_html=True)
